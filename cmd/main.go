@@ -7,7 +7,16 @@ import (
 	"strings"
 )
 
-func isYamlFilePresent(dirEntries []os.DirEntry) bool {
+func isDockerComposeConfigPresent(dirEntries []os.DirEntry) (bool, error) {
+
+	type dockerConfiguration struct {
+		name     string `yaml:"name"`
+		services string `yaml:"services"`
+		networks string `yaml:"networks"`
+		volumes  string `yaml:"volumes"`
+		configs  string `yaml:"configs"`
+		secrets  string `yaml:"secrets"`
+	}
 
 	for _, entry := range dirEntries {
 		if entry.IsDir() {
@@ -18,11 +27,23 @@ func isYamlFilePresent(dirEntries []os.DirEntry) bool {
 		isYaml := extension == (".yml") || extension == (".yaml")
 
 		if isYaml {
-			return true
+			return true, nil
 		}
+
+		// file, err := os.ReadFile(entry.Name())
+		// if err != nil {
+		// 	return false, fmt.Errorf("could not read file %s: %w", entry.Name(), err)
+		// }
+
+		// var yaml_contents dockerConfiguration
+		// err = yaml.Unmarshal([]byte(file), &yaml_contents)
+		// if err != nil {
+		// 	return false, fmt.Errorf("unmarshall %s failed: %w", entry.Name(), err)
+		// }
+
 	}
 
-	return false
+	return false, nil
 }
 
 func main() {
@@ -32,7 +53,12 @@ func main() {
 		panic(fmt.Errorf("failed to read files of current directory: %w", err))
 	}
 
-	if !(isYamlFilePresent(entries)) {
+	isDockerComposeConfigPresent, err := isDockerComposeConfigPresent(entries)
+	if err != nil {
+		panic(fmt.Errorf("failed to determine existence of Docker Compose configuration: %w", err))
+	}
+
+	if !(isDockerComposeConfigPresent) {
 
 		fmt.Println("No Docker Compose configuration file found in this directory.")
 
